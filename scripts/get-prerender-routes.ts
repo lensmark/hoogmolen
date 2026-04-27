@@ -11,7 +11,6 @@
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-
 const safeRead = (root: string, rel: string): string => {
   try {
     return readFileSync(resolve(root, rel), "utf-8");
@@ -19,7 +18,6 @@ const safeRead = (root: string, rel: string): string => {
     return "";
   }
 };
-
 const extractStaticRoutes = (appTsx: string): string[] => {
   const re = /<Route\s+path="([^"]+)"/g;
   const found = new Set<string>();
@@ -34,7 +32,6 @@ const extractStaticRoutes = (appTsx: string): string[] => {
   }
   return Array.from(found);
 };
-
 const extractProperties = (cfg: string): { slug: string; type: string }[] => {
   const re = /slug:\s*"([^"]+)"[\s\S]*?type:\s*"([^"]+)"/g;
   const out: { slug: string; type: string }[] = [];
@@ -42,7 +39,6 @@ const extractProperties = (cfg: string): { slug: string; type: string }[] => {
   while ((m = re.exec(cfg))) out.push({ slug: m[1], type: m[2] });
   return out;
 };
-
 const propertyToPath = (slug: string, type: string): string => {
   switch (type) {
     case "house":
@@ -56,7 +52,6 @@ const propertyToPath = (slug: string, type: string): string => {
       return `/overnachten/${slug}`;
   }
 };
-
 const extractSlugs = (cfg: string): string[] => {
   const re = /slug:\s*"([^"]+)"/g;
   const out: string[] = [];
@@ -64,7 +59,6 @@ const extractSlugs = (cfg: string): string[] => {
   while ((m = re.exec(cfg))) out.push(m[1]);
   return out;
 };
-
 const extractObjectKeys = (src: string): string[] => {
   const re = /^\s+"([a-z0-9][a-z0-9-]+)":\s*\{/gm;
   const out = new Set<string>();
@@ -72,24 +66,22 @@ const extractObjectKeys = (src: string): string[] => {
   while ((m = re.exec(src))) out.add(m[1]);
   return Array.from(out);
 };
-
 export const getPrerenderRoutes = (root: string): string[] => {
   const appTsx = readFileSync(resolve(root, "src/App.tsx"), "utf-8");
   const propCfg = readFileSync(resolve(root, "src/config/propertyConfig.ts"), "utf-8");
-  const unitsCfg = safeRead(root, "src/config/unitsConfig.ts");
+  // unitsConfig.ts niet meer gebruiken — de /verblijf/* routes bestaan niet meer
+  // in de app. Alle property-routes worden al correct gegenereerd via propertyConfig.ts
+  // + propertyToPath() hierboven.
   const wandelSrc = safeRead(root, "src/pages/WandelDetail.tsx");
   const paardrijdenSrc = safeRead(root, "src/pages/PaardrijdenDetail.tsx");
   const familieSrc = safeRead(root, "src/pages/FamilieDetail.tsx");
   const omgevingSrc = safeRead(root, "src/pages/OmgevingDetail.tsx");
-
   const all = new Set<string>();
   for (const p of extractStaticRoutes(appTsx)) all.add(p);
   for (const { slug, type } of extractProperties(propCfg)) all.add(propertyToPath(slug, type));
-  if (unitsCfg) for (const slug of extractSlugs(unitsCfg)) all.add(`/verblijf/${slug}`);
   for (const slug of extractObjectKeys(wandelSrc)) all.add(`/activiteiten/wandelen/${slug}`);
   for (const slug of extractObjectKeys(paardrijdenSrc)) all.add(`/activiteiten/paardrijden/${slug}`);
   for (const slug of extractSlugs(familieSrc)) all.add(`/activiteiten/familie/${slug}`);
   for (const slug of extractObjectKeys(omgevingSrc)) all.add(`/activiteiten/in-de-omgeving/${slug}`);
-
   return Array.from(all).sort();
 };
