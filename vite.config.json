@@ -1,0 +1,33 @@
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
+import path from "path";
+import prerender from "@prerenderer/rollup-plugin";
+
+export default defineConfig({
+  plugins: [
+    react(),
+    prerender({
+      // De 'robot' die de pagina's bezoekt
+      renderer: '@prerenderer/renderer-puppeteer',
+      rendererOptions: {
+        renderAfterDocumentEvent: 'render-event', // Wacht op Supabase data
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      },
+      // Voeg hier je 77 routes toe (ik zet de belangrijkste als voorbeeld)
+      routes: [
+        '/',
+        '/vergaderen',
+        '/over-ons',
+        '/kamers',
+        '/contact',
+        // Lovable kan de rest hier automatisch invullen vanuit de sitemap
+      ],
+    }),
+  ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+});
