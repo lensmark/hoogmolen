@@ -1,0 +1,13 @@
+project_id = "swzpbvoyorzmmlzrygxe"
+
+[functions.cf-upload]
+verify_jwt = false
+
+[functions.admin-bootstrap]
+verify_jwt = false
+
+[functions.cf-sync]
+verify_jwt = false
+
+[functions.send-form-email]
+verify_jwt = false
