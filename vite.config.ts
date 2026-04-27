@@ -63,6 +63,7 @@ const prerenderPlugin = async (): Promise<Plugin | false> => {
                     "--no-sandbox",
                     "--disable-setuid-sandbox",
                     "--disable-dev-shm-usage",
+                    "--blink-settings=imagesEnabled=false",
                 ],
                 executablePath,
                 headless: true,
@@ -75,9 +76,13 @@ const prerenderPlugin = async (): Promise<Plugin | false> => {
             },
         }),
         postProcess(renderedRoute: { route: string; html: string }) {
+            // Voeg defer toe alleen aan externe JS-scripts (niet aan JSON-LD of inline scripts)
             renderedRoute.html = renderedRoute.html.replace(
-                /<script (.*?)>/g,
-                "<script $1 defer>",
+                /<script ([^>]*src=[^>]*)>/g,
+                (match, attrs) => {
+                    if (attrs.includes("defer")) return match;
+                    return `<script ${attrs} defer>`;
+                },
             );
         },
     }) as Plugin;
